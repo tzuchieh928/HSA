@@ -1,7 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/xfeatures2d.hpp>
-#include <iostream>
+#include "OCL2KDTree.h"
 #include "KDtree.h"
 using namespace std;
 using namespace cv;
@@ -178,6 +178,47 @@ int main(int argc, const char* argv[])
 	}
 	printf(	"visited %d nodes for %d random findings (%f per lookup)\n",
 		sum, keypoints2.size(), sum / (double)keypoints2.size());
+
+
+
+
+
+	OCL2KDTree ocl2kdtree;
+
+
+	int status = ocl2kdtree.setupCL();
+	if (status != SDK_SUCCESS)
+	{
+		return status;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	free(featureTree);
 	free(testNode);

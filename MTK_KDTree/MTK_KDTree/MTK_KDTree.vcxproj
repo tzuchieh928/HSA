@@ -84,12 +84,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\opencv\build\install\include;C:\opencv\build\install\include\opencv;C:\opencv\build\install\include\opencv2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\opencv\build\install\include;C:\opencv\build\install\include\opencv;C:\opencv\build\install\include\opencv2;C:\Users\yu009_000\AMD APP SDK\3.0\include;C:\Users\yu009_000\AMD APP SDK\3.0\include\SDKUtil;$(AMDAPPSDKROOT)/include/;$(AMDAPPSDKROOT)/include/SDKUtil</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\opencv\build\install\x64\vc12\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_calib3d310.lib;opencv_core310.lib;opencv_face310.lib;opencv_highgui310.lib;opencv_imgcodecs310.lib;opencv_imgproc310.lib;opencv_ml310.lib;opencv_objdetect310.lib;opencv_photo310.lib;opencv_shape310.lib;opencv_stitching310.lib;opencv_superres310.lib;opencv_ts310.lib;opencv_video310.lib;opencv_videoio310.lib;opencv_videostab310.lib;opencv_xfeatures2d310d.lib;opencv_features2d310d.lib;opencv_flann310.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\opencv\build\install\x64\vc12\lib;C:\Users\yu009_000\AMD APP SDK\3.0\lib\x86_64;$(AMDAPPSDKROOT)\lib\x86_64\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_calib3d310.lib;opencv_core310.lib;opencv_face310.lib;opencv_highgui310.lib;opencv_imgcodecs310.lib;opencv_imgproc310.lib;opencv_ml310.lib;opencv_objdetect310.lib;opencv_photo310.lib;opencv_shape310.lib;opencv_stitching310.lib;opencv_superres310.lib;opencv_ts310.lib;opencv_video310.lib;opencv_videoio310.lib;opencv_videostab310.lib;opencv_xfeatures2d310d.lib;opencv_features2d310d.lib;opencv_flann310.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,11 +121,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="OCL2KDTree.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="OCL2KDTree.h" />
+    <ClInclude Include="SVMKDTreeNode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="SVMKDTreeSearch_OclFlags.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SVMKDTreeSearch_Kernels.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

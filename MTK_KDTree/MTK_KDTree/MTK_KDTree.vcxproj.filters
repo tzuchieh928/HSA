@@ -18,6 +18,9 @@
     <ClCompile Include="Source.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
+    <ClCompile Include="OCL2KDTree.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KDTree.h">
@@ -26,5 +29,18 @@
     <ClInclude Include="OCL2KDTree.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="SVMKDTreeNode.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="SVMKDTreeSearch_OclFlags.txt">
+      <Filter>資源檔</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SVMKDTreeSearch_Kernels.cl">
+      <Filter>資源檔</Filter>
+    </None>
   </ItemGroup>
 </Project>
