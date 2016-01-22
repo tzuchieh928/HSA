@@ -39,7 +39,8 @@ private:
 
 	/* svm buffer for search keys */
 	void*                 svmSearchBuf;
-
+	struct hsaNode *root;
+	struct hsaNode *found;
 	int retValue;
 public:
 	CLCommandArgs*       sampleArgs;
@@ -62,7 +63,7 @@ public:
 	int setupCL();
 	int initialize();
 	int genBinaryImage();
-
+	int createTree(int len, int i, int dim);
 	int dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2);
 
 	void swap(struct hsaNode *x, struct hsaNode *y) {
@@ -117,11 +118,7 @@ public:
 		return n;
 	}
 
-	/*void getNumOfKeyPoint(int num1, int num2)
-	{
-		kdtreeSize = num1;
-		searchDataSize = num2;
-	}*/
+
 
 };
 

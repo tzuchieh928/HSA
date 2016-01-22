@@ -5,7 +5,7 @@
 
 int main(int argc, const char* argv[])
 {
-	const Mat img1 = imread("6.jpg", 0); //Load as grayscale
+	const Mat img1 = imread("5.jpg", 0); //Load as grayscale
 	const Mat img2 = imread("6.jpg", 0);
 
 	FILE *fkp1, *fkp2, *fbfmatch,*fkdmatch;
@@ -153,7 +153,7 @@ int main(int argc, const char* argv[])
 		testNode[i].x = keypoints2[i].pt.x;
 		testNode[i].y = keypoints2[i].pt.y;
 	}
-	root = kt.make_tree(featureTree, descriptors2.rows, 0, descriptors2.cols);
+	root = kt.make_tree(featureTree, descriptors1.rows, 0, descriptors1.cols);
 
 	int sum = 0;
 	for (int i = 0; i < keypoints2.size(); i++) {
@@ -177,7 +177,12 @@ int main(int argc, const char* argv[])
 		sum, keypoints2.size(), sum / (double)keypoints2.size());
 
 
-
+	free(featureTree);
+	free(testNode);
+	fclose(fkp1);
+	fclose(fkp2);
+	fclose(fkdmatch);
+	fclose(fbfmatch);
 
 
 	OCL2KDTree ocl2kdtree;
@@ -194,7 +199,6 @@ int main(int argc, const char* argv[])
 		return ocl2kdtree.genBinaryImage();
 	}
 	*/
-	//ocl2kdtree.getNumOfKeyPoint(keypoints1.size(), keypoints2.size());
 	int status = ocl2kdtree.setupCL();
 	if (status != SDK_SUCCESS)
 	{
@@ -203,6 +207,7 @@ int main(int argc, const char* argv[])
 	
 
 	ocl2kdtree.dataMarshalling(keypoints1, keypoints2, descriptors1, descriptors2);
+	ocl2kdtree.createTree(descriptors1.rows, 0, descriptors1.cols);
 
 
 
@@ -227,13 +232,7 @@ int main(int argc, const char* argv[])
 
 
 
-
-	free(featureTree);
-	free(testNode);
-	fclose(fkp1);
-	fclose(fkp2);
-	fclose(fkdmatch);
-	fclose(fbfmatch);
+	
 	system("PAUSE");
 	return 0;
 }

@@ -9,18 +9,11 @@ int OCL2KDTree::initialize()
 	return SDK_SUCCESS;
 }
 
-int OCL2KDTree::genBinaryImage()
+int OCL2KDTree::createTree(int len, int i, int dim)
 {
-	bifData binaryData;
-	binaryData.kernelName = std::string("SVMKDTreeSearch_Kernels.cl");
-	binaryData.flagsStr = std::string("");
-	if (sampleArgs->isComplierFlagsSpecified())
-	{
-		binaryData.flagsFileName = std::string(sampleArgs->flags.c_str());
-	}
-	binaryData.binaryName = std::string(sampleArgs->dumpBinary.c_str());
-	int status = generateBinaryImage(binaryData);
-	return status;
+	struct hsaNode *t = (hsaNode *)svmTreeBuf;
+	root = make_tree(t, len, i, dim);
+	return SDK_SUCCESS;
 }
 
 int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2)
@@ -64,7 +57,6 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 	//srand(time(0));
 	for (int i = 0; i < descriptors1.rows; i++)
 	{
-		cout << keypoints1[i].pt.x << endl;
 		hsaKdTree[i].index = i;
 		for (int j = 0; j < descriptors1.cols; j++)
 		{
@@ -72,7 +64,7 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 			//cout << featureTree[i].des[j] << endl;
 		}
 		hsaKdTree[i].x = keypoints1[i].pt.x;
-		cout << hsaKdTree[i].x << endl;
+		//cout << hsaKdTree[i].x << endl;
 		hsaKdTree[i].y = keypoints1[i].pt.y;
 		//cout << featureTree[i].y << endl;
 
@@ -83,6 +75,41 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 		NULL,
 		NULL);
 	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
+
+	/* reserve svm space for CPU update */
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmSearchBuf,
+		keypoints2.size() * sizeof(hsaNode),
+		0,
+		NULL,
+		NULL);
+
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmTreeBuf) failed.");
+
+	hsaNode* hsaTestNode = (hsaNode *)svmSearchBuf;
+	for (int i = 0; i < descriptors2.rows; i++)
+	{
+		hsaTestNode[i].index = i;
+		for (int j = 0; j < descriptors2.cols; j++)
+		{
+			hsaTestNode[i].des[j] = descriptors2.at<float>(i, j);
+			//cout << hsaTestNode[i].des[j] << endl;
+		}
+		hsaTestNode[i].x = keypoints2[i].pt.x;
+		hsaTestNode[i].y = keypoints2[i].pt.y;
+		
+	}
+
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmSearchBuf,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
 	return SDK_SUCCESS;
 }
 
@@ -91,20 +118,6 @@ int OCL2KDTree::setupCL(){
 	cl_int status = 0;
 	cl_device_type dType = CL_DEVICE_TYPE_GPU;
 
-/*	if (sampleArgs->deviceType.compare("cpu") == 0)
-	{
-		dType = CL_DEVICE_TYPE_CPU;
-	}
-	else //deviceType = "gpu"
-	{
-		dType = CL_DEVICE_TYPE_GPU;
-		if (sampleArgs->isThereGPU() == false)
-		{
-			std::cout << "GPU not found. Falling back to CPU device" << std::endl;
-			dType = CL_DEVICE_TYPE_CPU;
-		}
-	}
-	*/
 	// Get platform
 	cl_platform_id platform = NULL;
 	retValue = getPlatform(platform, sampleArgs->platformId,
