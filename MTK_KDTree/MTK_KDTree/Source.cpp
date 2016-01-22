@@ -1,10 +1,7 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/xfeatures2d.hpp>
+
 #include "OCL2KDTree.h"
 #include "KDtree.h"
-using namespace std;
-using namespace cv;
+
 
 int main(int argc, const char* argv[])
 {
@@ -190,38 +187,22 @@ int main(int argc, const char* argv[])
 		return SDK_FAILURE;
 	}
 
-
+	/*
 	if (ocl2kdtree.sampleArgs->isDumpBinaryEnabled())
 	{
 		//GenBinaryImage
 		return ocl2kdtree.genBinaryImage();
 	}
-
-	ocl2kdtree.getNumOfKeyPoint(keypoints1.size(), keypoints2.size());
+	*/
+	//ocl2kdtree.getNumOfKeyPoint(keypoints1.size(), keypoints2.size());
 	int status = ocl2kdtree.setupCL();
 	if (status != SDK_SUCCESS)
 	{
 		return status;
 	}
-	hsaNode* hsaKdTree = (hsaNode *)ocl2kdtree.svmTreeBuf;
-	 
-	//srand(time(0));
-	for (int i = 0; i < descriptors1.rows; i++)
-	{
-		hsaKdTree[i].index = i;
-		for (int j = 0; j < descriptors1.cols; j++)
-		{
-			hsaKdTree[i].des[j] = descriptors1.at<float>(i, j);
-			//cout << featureTree[i].des[j] << endl;
-		}
-		hsaKdTree[i].x = keypoints1[i].pt.x;
-		cout << hsaKdTree[i].x << endl;
-		hsaKdTree[i].y = keypoints1[i].pt.y;
-		//cout << featureTree[i].y << endl;
+	
 
-	}
-
-
+	ocl2kdtree.dataMarshalling(keypoints1, keypoints2, descriptors1, descriptors2);
 
 
 

@@ -23,6 +23,69 @@ int OCL2KDTree::genBinaryImage()
 	return status;
 }
 
+int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2)
+{
+	cl_int   status;
+	// initialize any device/SVM memory here.
+	svmTreeBuf = clSVMAlloc(context,
+		CL_MEM_READ_WRITE,
+		keypoints1.size() * sizeof(hsaNode),
+		0);
+
+	if (NULL == svmTreeBuf)
+		retValue = SDK_FAILURE;
+
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmTreeBuf) failed.");
+
+	svmSearchBuf = clSVMAlloc(context,
+		CL_MEM_READ_WRITE,
+		keypoints2.size() * sizeof(hsaNode),
+		0);
+
+	if (NULL == svmSearchBuf)
+		retValue = SDK_FAILURE;
+
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmSearchBuf) failed.");
+
+	/* reserve svm space for CPU update */
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmTreeBuf,
+		keypoints1.size() * sizeof(hsaNode),
+		0,
+		NULL,
+		NULL);
+
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmTreeBuf) failed.");
+
+	hsaNode* hsaKdTree = (hsaNode *)svmTreeBuf;
+
+	//srand(time(0));
+	for (int i = 0; i < descriptors1.rows; i++)
+	{
+		cout << keypoints1[i].pt.x << endl;
+		hsaKdTree[i].index = i;
+		for (int j = 0; j < descriptors1.cols; j++)
+		{
+			hsaKdTree[i].des[j] = descriptors1.at<float>(i, j);
+			//cout << featureTree[i].des[j] << endl;
+		}
+		hsaKdTree[i].x = keypoints1[i].pt.x;
+		cout << hsaKdTree[i].x << endl;
+		hsaKdTree[i].y = keypoints1[i].pt.y;
+		//cout << featureTree[i].y << endl;
+
+	}
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmTreeBuf,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+	return SDK_SUCCESS;
+}
+
 
 int OCL2KDTree::setupCL(){
 	cl_int status = 0;
@@ -44,7 +107,7 @@ int OCL2KDTree::setupCL(){
 	*/
 	// Get platform
 	cl_platform_id platform = NULL;
-	int retValue = getPlatform(platform, sampleArgs->platformId,
+	retValue = getPlatform(platform, sampleArgs->platformId,
 		sampleArgs->isPlatformEnabled());
 	CHECK_ERROR(retValue, SDK_SUCCESS, "getPlatform() failed");
 
@@ -119,26 +182,7 @@ int OCL2KDTree::setupCL(){
 	sample_kernel = clCreateKernel(program, "nearest_kernel", &status);
 	CHECK_OPENCL_ERROR(status, "clCreateKernel::sample_kernel failed.");
 
-		// initialize any device/SVM memory here.
-	svmTreeBuf = clSVMAlloc(context,
-	CL_MEM_READ_WRITE,
-	kdtreeSize * sizeof(hsaNode),
-	0);
 
-	if (NULL == svmTreeBuf)
-	retValue = SDK_FAILURE;
-
-	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmTreeBuf) failed.");
-
-	svmSearchBuf = clSVMAlloc(context,
-	CL_MEM_READ_WRITE,
-	searchDataSize * sizeof(hsaNode),
-	0);
-
-	if (NULL == svmSearchBuf)
-	retValue = SDK_FAILURE;
-
-	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmSearchBuf) failed.");
 
 	return SDK_SUCCESS;
 }

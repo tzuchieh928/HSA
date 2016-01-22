@@ -6,9 +6,14 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/xfeatures2d.hpp>
 #include "CLUtil.hpp"
 #include "SVMKDTreeNode.h"
 using namespace appsdk;
+using namespace std;
+using namespace cv;
 
 #define SAMPLE_VERSION      "AMD-APP-SDK-v3.0.130.2"
 #define OCL_COMPILER_FLAGS  "SVMKDTreeSearch_OclFlags.txt"
@@ -29,16 +34,16 @@ private:
 	cl_double             setupTime;
 	cl_double             kernelTime;
 	SDKTimer*             sampleTimer;
-
-	int kdtreeSize;
-	int searchDataSize;
-public:
-	CLCommandArgs*       sampleArgs;
 	/* svm buffer for binary tree */
 	void*                 svmTreeBuf;
 
 	/* svm buffer for search keys */
 	void*                 svmSearchBuf;
+
+	int retValue;
+public:
+	CLCommandArgs*       sampleArgs;
+	
 	OCL2KDTree()
 	{
 		sampleArgs = new CLCommandArgs();
@@ -58,12 +63,15 @@ public:
 	int initialize();
 	int genBinaryImage();
 
+	int dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2);
+
 	void swap(struct hsaNode *x, struct hsaNode *y) {
 		struct hsaNode tmp;
 		memcpy(&tmp, x, sizeof(tmp));
 		memcpy(x, y, sizeof(tmp));
 		memcpy(y, &tmp, sizeof(tmp));
 	}
+
 	/* see quickselect method */
 	struct hsaNode* find_median(struct hsaNode *start, struct hsaNode *end, int idx)
 	{
@@ -109,11 +117,11 @@ public:
 		return n;
 	}
 
-	void getNumOfKeyPoint(int num1, int num2)
+	/*void getNumOfKeyPoint(int num1, int num2)
 	{
 		kdtreeSize = num1;
 		searchDataSize = num2;
-	}
+	}*/
 
 };
 
