@@ -34,13 +34,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="SVMKDTreeSearch_OclFlags.txt">
-      <Filter>資源檔</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="SVMKDTreeSearch_Kernels.cl">
+    <None Include="..\x64\Debug\SVMKDTreeSearch_Kernels.cl">
       <Filter>資源檔</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\x64\Debug\SVMKDTreeSearch_OclFlags.txt">
+      <Filter>資源檔</Filter>
+    </Text>
   </ItemGroup>
 </Project>

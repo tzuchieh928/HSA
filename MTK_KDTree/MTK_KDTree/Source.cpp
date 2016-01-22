@@ -8,8 +8,8 @@ using namespace cv;
 
 int main(int argc, const char* argv[])
 {
-	const Mat img1 = imread("3.jpg", 0); //Load as grayscale
-	const Mat img2 = imread("3.jpg", 0);
+	const Mat img1 = imread("6.jpg", 0); //Load as grayscale
+	const Mat img2 = imread("6.jpg", 0);
 
 	FILE *fkp1, *fkp2, *fbfmatch,*fkdmatch;
 	fkp1 = fopen("keypoint1.txt", "w");
@@ -184,15 +184,42 @@ int main(int argc, const char* argv[])
 
 
 	OCL2KDTree ocl2kdtree;
+	// Initialize
+	if (ocl2kdtree.initialize() != SDK_SUCCESS)
+	{
+		return SDK_FAILURE;
+	}
 
 
+	if (ocl2kdtree.sampleArgs->isDumpBinaryEnabled())
+	{
+		//GenBinaryImage
+		return ocl2kdtree.genBinaryImage();
+	}
+
+	ocl2kdtree.getNumOfKeyPoint(keypoints1.size(), keypoints2.size());
 	int status = ocl2kdtree.setupCL();
 	if (status != SDK_SUCCESS)
 	{
 		return status;
 	}
+	hsaNode* hsaKdTree = (hsaNode *)ocl2kdtree.svmTreeBuf;
+	 
+	//srand(time(0));
+	for (int i = 0; i < descriptors1.rows; i++)
+	{
+		hsaKdTree[i].index = i;
+		for (int j = 0; j < descriptors1.cols; j++)
+		{
+			hsaKdTree[i].des[j] = descriptors1.at<float>(i, j);
+			//cout << featureTree[i].des[j] << endl;
+		}
+		hsaKdTree[i].x = keypoints1[i].pt.x;
+		cout << hsaKdTree[i].x << endl;
+		hsaKdTree[i].y = keypoints1[i].pt.y;
+		//cout << featureTree[i].y << endl;
 
-
+	}
 
 
 

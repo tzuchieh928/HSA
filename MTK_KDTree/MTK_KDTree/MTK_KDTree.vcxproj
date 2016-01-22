@@ -130,10 +130,10 @@
     <ClInclude Include="SVMKDTreeNode.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="SVMKDTreeSearch_OclFlags.txt" />
+    <None Include="..\x64\Debug\SVMKDTreeSearch_Kernels.cl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="SVMKDTreeSearch_Kernels.cl" />
+    <Text Include="..\x64\Debug\SVMKDTreeSearch_OclFlags.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

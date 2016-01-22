@@ -1,10 +1,34 @@
 #include "OCL2KDTree.h"
+int OCL2KDTree::initialize()
+{
+	// Call base class Initialize to get default configuration
+	if (sampleArgs->initialize() != SDK_SUCCESS)
+	{
+		return SDK_FAILURE;
+	}
+	return SDK_SUCCESS;
+}
+
+int OCL2KDTree::genBinaryImage()
+{
+	bifData binaryData;
+	binaryData.kernelName = std::string("SVMKDTreeSearch_Kernels.cl");
+	binaryData.flagsStr = std::string("");
+	if (sampleArgs->isComplierFlagsSpecified())
+	{
+		binaryData.flagsFileName = std::string(sampleArgs->flags.c_str());
+	}
+	binaryData.binaryName = std::string(sampleArgs->dumpBinary.c_str());
+	int status = generateBinaryImage(binaryData);
+	return status;
+}
+
 
 int OCL2KDTree::setupCL(){
 	cl_int status = 0;
-	cl_device_type dType;
+	cl_device_type dType = CL_DEVICE_TYPE_GPU;
 
-	if (sampleArgs->deviceType.compare("cpu") == 0)
+/*	if (sampleArgs->deviceType.compare("cpu") == 0)
 	{
 		dType = CL_DEVICE_TYPE_CPU;
 	}
@@ -17,7 +41,7 @@ int OCL2KDTree::setupCL(){
 			dType = CL_DEVICE_TYPE_CPU;
 		}
 	}
-
+	*/
 	// Get platform
 	cl_platform_id platform = NULL;
 	int retValue = getPlatform(platform, sampleArgs->platformId,
@@ -92,13 +116,13 @@ int OCL2KDTree::setupCL(){
 	CHECK_ERROR(retValue, SDK_SUCCESS, "buildOpenCLProgram() failed");
 
 	// get a kernel object handle for a kernel with the given name
-	sample_kernel = clCreateKernel(program, "sample_kernel", &status);
+	sample_kernel = clCreateKernel(program, "nearest_kernel", &status);
 	CHECK_OPENCL_ERROR(status, "clCreateKernel::sample_kernel failed.");
 
-	/*	// initialize any device/SVM memory here.
+		// initialize any device/SVM memory here.
 	svmTreeBuf = clSVMAlloc(context,
 	CL_MEM_READ_WRITE,
-	numNodes*sizeof(node),
+	kdtreeSize * sizeof(hsaNode),
 	0);
 
 	if (NULL == svmTreeBuf)
@@ -108,13 +132,13 @@ int OCL2KDTree::setupCL(){
 
 	svmSearchBuf = clSVMAlloc(context,
 	CL_MEM_READ_WRITE,
-	numKeys*sizeof(searchKey),
+	searchDataSize * sizeof(hsaNode),
 	0);
 
 	if (NULL == svmSearchBuf)
 	retValue = SDK_FAILURE;
 
-	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmSearchBuf) failed.");*/
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmSearchBuf) failed.");
 
 	return SDK_SUCCESS;
 }
