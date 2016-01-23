@@ -30,9 +30,7 @@ __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int 
 		node *kdtreeroot = (node *)root;
 		node *testNode = (node *)nd;
 		int index = get_global_id(0);
-		//printf("%d", index);
-		if(best[index] == -1)
-			printf("%d", best[index]);
+		
 /*
 		if (!kdtreeroot) return;
 		d = dist(kdtreeroot, &testNode[index], dim);

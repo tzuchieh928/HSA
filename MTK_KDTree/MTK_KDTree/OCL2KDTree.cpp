@@ -61,10 +61,15 @@ int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
 		sizeof(int), &descriptors2.cols);
 	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
 
-	status = clSetKernelArgSVMPointer(sample_kernel,
+	/*status = clSetKernelArgSVMPointer(sample_kernel,
 		4,
-		(int *)(svmFound));
-	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmFound) failed.");
+		(void *)(svmFound));
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmFound) failed.");*/
+
+	status = clSetKernelArg(sample_kernel,
+		4,
+		sizeof(cl_mem), &clmFound);
+	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
 
 	status = clSetKernelArgSVMPointer(sample_kernel,
 		5,
@@ -186,7 +191,7 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 
 
 
-	svmFound = clSVMAlloc(context,
+	/*svmFound = clSVMAlloc(context,
 		CL_MEM_READ_WRITE,
 		keypoints2.size() * sizeof(int),
 		0);
@@ -194,9 +199,11 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 	if (NULL == svmFound)
 		retValue = SDK_FAILURE;
 
-	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");*/
 
-	
+	svmFound = malloc(sizeof(int)* keypoints2.size());
+	clmFound = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int)* keypoints2.size(), svmFound, NULL);
+
 
 	svmBestDist = clSVMAlloc(context,
 		CL_MEM_READ_WRITE,
