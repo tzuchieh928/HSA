@@ -36,9 +36,110 @@ int OCL2KDTree::createTree(int len, int i, int dim)
 	return SDK_SUCCESS;
 }
 
-int OCL2KDTree::findNearest(vector<KeyPoint> keypoints2, Mat descriptors2)
-{
+int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
+	
+	size_t globalThreads = keypoints2.size();
 
+	// Set appropriate arguments to the kernel
+	int status = clSetKernelArgSVMPointer(sample_kernel,
+		0,
+		(void *)(svmTreeBuf));
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmTreeBuf) failed.");
+
+	status = clSetKernelArgSVMPointer(sample_kernel,
+		1,
+		(void *)(svmSearchBuf));
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmSearchBuf) failed.");
+	int i = 0;
+	status = clSetKernelArg(sample_kernel,
+		2,
+		sizeof(int), &i);
+	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
+
+	status = clSetKernelArg(sample_kernel,
+		3,
+		sizeof(int), &descriptors2.cols);
+	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
+
+	status = clSetKernelArgSVMPointer(sample_kernel,
+		4,
+		(int *)(svmFound));
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmFound) failed.");
+
+	status = clSetKernelArgSVMPointer(sample_kernel,
+		5,
+		(double *)(svmBestDist));
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmBestDist) failed.");
+
+
+	// Enqueue a kernel run call
+	cl_event ndrEvt;
+	status = clEnqueueNDRangeKernel(
+		commandQueue,
+		sample_kernel,
+		1,
+		NULL,
+		&globalThreads,
+		NULL,
+		0,
+		NULL,
+		&ndrEvt);
+	CHECK_OPENCL_ERROR(status, "clEnqueueNDRangeKernel failed.");
+
+
+
+
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmFound,
+		keypoints2.size() * sizeof(int),
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmSearchBuf) failed.");
+
+	int *found = (int *)svmFound;
+	
+	for (int i = 0; i < keypoints2.size(); i++) {
+		fprintf(fsvmkdmatch, "%d\n", found[i]);
+	}
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmFound,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
+
+
+
+
+
+	status = clFlush(commandQueue);
+	CHECK_OPENCL_ERROR(status, "clFlush failed.(commandQueue)");
+
+	status = waitForEventAndRelease(&ndrEvt);
+	CHECK_ERROR(status, SDK_SUCCESS, "WaitForEventAndRelease(ndrEvt) Failed");
+
+	return SDK_SUCCESS;
+}
+
+
+int OCL2KDTree::cpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2)
+{
+	int        status = SDK_SUCCESS;
+
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmSearchBuf,
+		keypoints2.size() * sizeof(hsaNode),
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmSearchBuf) failed.");
+	
 	struct hsaNode *found;
 	double best_dist;
 	hsaNode* testNode = (hsaNode *)svmSearchBuf;
@@ -48,6 +149,13 @@ int OCL2KDTree::findNearest(vector<KeyPoint> keypoints2, Mat descriptors2)
 		nearest(root, &testNode[i], 0, descriptors2.cols, &found, &best_dist);
 		fprintf(fsvmkdmatch, "%d\t%d\t%.5f\n", found->index, testNode[i].index, best_dist);
 	}
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmSearchBuf,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
 	return SDK_SUCCESS;
 }
 
@@ -75,6 +183,31 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 		retValue = SDK_FAILURE;
 
 	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmSearchBuf) failed.");
+
+
+
+	svmFound = clSVMAlloc(context,
+		CL_MEM_READ_WRITE,
+		keypoints2.size() * sizeof(int),
+		0);
+
+	if (NULL == svmFound)
+		retValue = SDK_FAILURE;
+
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");
+
+	
+
+	svmBestDist = clSVMAlloc(context,
+		CL_MEM_READ_WRITE,
+		keypoints2.size() * sizeof(double),
+		0);
+
+	if (NULL == svmBestDist)
+		retValue = SDK_FAILURE;
+
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");
+
 
 	/* reserve svm space for CPU update */
 	status = clEnqueueSVMMap(commandQueue,
@@ -145,6 +278,30 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 		NULL,
 		NULL);
 	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
+
+	/* reserve svm space for CPU update */
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmFound,
+		keypoints2.size() * sizeof(int),
+		0,
+		NULL,
+		NULL);
+
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmFound) failed.");
+	int* found = (int *)svmFound;
+	for (int i = 0; i < keypoints2.size(); i++)
+		found[i] = -1;
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmFound,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmFound) failed.");
+
+
 
 	return SDK_SUCCESS;
 }

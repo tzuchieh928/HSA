@@ -5,7 +5,7 @@
 
 int main(int argc, const char* argv[])
 {
-	const Mat img1 = imread("5.jpg", 0); //Load as grayscale
+	const Mat img1 = imread("6.jpg", 0); //Load as grayscale
 	const Mat img2 = imread("6.jpg", 0);
 
 	FILE *fkp1, *fkp2, *fbfmatch,*fkdmatch;
@@ -208,10 +208,10 @@ int main(int argc, const char* argv[])
 
 	ocl2kdtree.dataMarshalling(keypoints1, keypoints2, descriptors1, descriptors2);
 	ocl2kdtree.createTree(descriptors1.rows, 0, descriptors1.cols);
-	ocl2kdtree.findNearest(keypoints2, descriptors2);
+	//ocl2kdtree.cpuFindNearest(keypoints2, descriptors2);
 
-
-
+	ocl2kdtree.gpuFindNearest(keypoints2, descriptors2);
+	//ocl2kdtree.gpuFindNearest(keypoints2, descriptors2);
 
 
 

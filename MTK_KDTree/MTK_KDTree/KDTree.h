@@ -118,6 +118,60 @@ public:
 		nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist);
 	}
 
+	void iterativeNearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
+	struct kd_node_t **best, double *best_dist) {
+
+		struct kd_node_t *oriRoot = root;
+		float d, dx, dx2;
+
+		if (!root) return;
+		
+		while (true){
+			if (!root) return;
+
+			d = dist(root, nd, dim);
+			dx = root->des[i] - nd->des[i];
+			dx2 = dx * dx;
+			if (!*best || d < *best_dist)
+			{
+				*best_dist = d;
+				*best = root;
+			}
+			/* if chance of exact match is high */
+			if (!*best_dist)
+				return;
+
+			if (++i >= dim) i = 0;
+
+			dx > 0 ? root = root->left : root = root->right;
+		}
+		root = oriRoot;
+		d = dist(root, nd, dim);
+		dx = root->des[i] - nd->des[i];
+		dx2 = dx * dx;
+		if (dx2 >= *best_dist) return;
+		i = 1;
+		while (true){
+			if (!root) return;
+
+			d = dist(root, nd, dim);
+			dx = root->des[i] - nd->des[i];
+			dx2 = dx * dx;
+			if (!*best || d < *best_dist)
+			{
+				*best_dist = d;
+				*best = root;
+			}
+			/* if chance of exact match is high */
+			if (!*best_dist)
+				return;
+
+			if (++i >= dim) i = 0;
+
+			dx > 0 ? root = root->right : root = root->left;
+		}
+
+	}
 
 
 };

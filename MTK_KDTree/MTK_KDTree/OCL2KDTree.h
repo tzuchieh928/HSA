@@ -39,10 +39,14 @@ private:
 
 	/* svm buffer for search keys */
 	void*                 svmSearchBuf;
-	struct hsaNode *root;
-	struct hsaNode *found;
-	int retValue;
-	FILE *fsvmkdmatch;
+	/* svm found */
+	void*                 svmFound;
+	/* best Dist */
+	void*                 svmBestDist;
+	struct hsaNode		  *root;
+	//struct hsaNode *found;
+	int					  retValue;
+	FILE				  *fsvmkdmatch;
 public:
 	CLCommandArgs*       sampleArgs;
 	
@@ -68,7 +72,8 @@ public:
 	int genBinaryImage();
 	int createTree(int len, int i, int dim);
 	int dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2);
-	int findNearest(vector<KeyPoint> keypoints2, Mat descriptors2);
+	int cpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2);
+	int gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2);
 
 	void swap(struct hsaNode *x, struct hsaNode *y) {
 		struct hsaNode tmp;
