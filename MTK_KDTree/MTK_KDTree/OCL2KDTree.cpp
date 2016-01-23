@@ -11,10 +11,46 @@ int OCL2KDTree::initialize()
 
 int OCL2KDTree::createTree(int len, int i, int dim)
 {
+	cl_int   status;
+	/* reserve svm space for CPU update */
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_WRITE_INVALIDATE_REGION,
+		svmTreeBuf,
+		len * sizeof(hsaNode),
+		0,
+		NULL,
+		NULL);
+
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmTreeBuf) failed.");
+
 	struct hsaNode *t = (hsaNode *)svmTreeBuf;
 	root = make_tree(t, len, i, dim);
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmTreeBuf,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
+
 	return SDK_SUCCESS;
 }
+
+int OCL2KDTree::findNearest(vector<KeyPoint> keypoints2, Mat descriptors2)
+{
+
+	struct hsaNode *found;
+	double best_dist;
+	hsaNode* testNode = (hsaNode *)svmSearchBuf;
+	//testNode[0].x = 5.21f;
+	for (int i = 0; i < keypoints2.size(); i++) {
+		found = 0;
+		nearest(root, &testNode[i], 0, descriptors2.cols, &found, &best_dist);
+		fprintf(fsvmkdmatch, "%d\t%d\t%.5f\n", found->index, testNode[i].index, best_dist);
+	}
+	return SDK_SUCCESS;
+}
+
 
 int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2)
 {

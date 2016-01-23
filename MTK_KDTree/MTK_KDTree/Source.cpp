@@ -208,7 +208,7 @@ int main(int argc, const char* argv[])
 
 	ocl2kdtree.dataMarshalling(keypoints1, keypoints2, descriptors1, descriptors2);
 	ocl2kdtree.createTree(descriptors1.rows, 0, descriptors1.cols);
-
+	ocl2kdtree.findNearest(keypoints2, descriptors2);
 
 
 

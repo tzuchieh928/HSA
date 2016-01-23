@@ -42,6 +42,7 @@ private:
 	struct hsaNode *root;
 	struct hsaNode *found;
 	int retValue;
+	FILE *fsvmkdmatch;
 public:
 	CLCommandArgs*       sampleArgs;
 	
@@ -51,6 +52,7 @@ public:
 		sampleTimer = new SDKTimer();
 		sampleArgs->sampleVerStr = SAMPLE_VERSION;
 		sampleArgs->flags = OCL_COMPILER_FLAGS;
+		fsvmkdmatch = fopen("svmkdmatch.txt", "w");
 	};
 
 
@@ -58,6 +60,7 @@ public:
 	{
 		delete sampleArgs;
 		delete sampleTimer;
+		fclose(fsvmkdmatch);
 	};
 
 	int setupCL();
@@ -65,6 +68,7 @@ public:
 	int genBinaryImage();
 	int createTree(int len, int i, int dim);
 	int dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> keypoints2, Mat descriptors1, Mat descriptors2);
+	int findNearest(vector<KeyPoint> keypoints2, Mat descriptors2);
 
 	void swap(struct hsaNode *x, struct hsaNode *y) {
 		struct hsaNode tmp;
@@ -116,6 +120,43 @@ public:
 			n->right = make_tree(n + 1, t + len - (n + 1), i, dim);
 		}
 		return n;
+	}
+
+	double dist(struct hsaNode *a, struct hsaNode *b, int dim)
+	{
+		float t, d = 0;
+		while (dim--) {
+			t = a->des[dim] - b->des[dim];
+			d += t * t;
+		}
+		return d;
+	}
+
+	void nearest(struct hsaNode *root, struct hsaNode *nd, int i, int dim,
+	struct hsaNode **best, double *best_dist)
+	{
+		float d, dx, dx2;
+
+		if (!root) return;
+		d = dist(root, nd, dim);
+		dx = root->des[i] - nd->des[i];
+		dx2 = dx * dx;
+
+		//visited++;
+
+		if (!*best || d < *best_dist) {
+			*best_dist = d;
+			*best = root;
+		}
+
+		/* if chance of exact match is high */
+		if (!*best_dist) return;
+
+		if (++i >= dim) i = 0;
+
+		nearest(dx > 0 ? root->left : root->right, nd, i, dim, best, best_dist);
+		if (dx2 >= *best_dist) return;
+		nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist);
 	}
 
 
