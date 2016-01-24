@@ -117,7 +117,7 @@ int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
 	int *found = (int *)svmFound;
 	double *bestDist = (double *)svmBestDist;
 	for (int i = 0; i < keypoints2.size(); i++) {
-		fprintf(fsvmkdmatch, "%d\t%.5f\n", found[i], bestDist[i]);
+		fprintf(fsvmkdmatch, "%d\t%d\t%.5f\n", found[i], i, bestDist[i]);
 	}
 	status = clEnqueueSVMUnmap(commandQueue,
 		svmFound,

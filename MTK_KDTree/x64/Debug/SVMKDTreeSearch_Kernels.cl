@@ -20,7 +20,31 @@ double dist(node *a, node *b, int dim)
 		return d;
 }
 
-/***
+
+void nearest(node *root, node*nd, int i, int dim, int *best, double *best_dist, int index)
+{
+	float d, dx, dx2;
+
+	if (!root) return;
+	d = dist(root, nd, dim);
+	dx = root->des[i] - nd->des[i];
+	dx2 = dx * dx;
+	
+	if (best[index] == -1 || d < best_dist[index]) {
+		best_dist[index] = d;
+		best[index] = root->index;
+	}
+
+	/* if chance of exact match is high */
+	if (!best_dist[index]) return;
+	if (++i >= dim) i = 0;
+	nearest(dx > 0 ? root->left : root->right, nd, i, dim, best, best_dist, index);
+	if (dx2 >= best_dist[index]) return;
+	nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist, index);
+}
+
+
+/***  
  * sample_kernel:
  ***/
 __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int dim,
@@ -46,10 +70,10 @@ __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int 
 
 		// if chance of exact match is high 
 		if (!best_dist[index]) return;
-
+		     
 		if (++i >= dim) i = 0;
 
-		nearest_kernel(dx > 0 ? kdtreeroot->left : kdtreeroot->right, nd, i, dim, best, best_dist);
-		if (dx2 >= best_dist[index]) return;
+	//	nearest(dx > 0 ? kdtreeroot->left : kdtreeroot->right, nd, i, dim, best, best_dist, index);
+	//	if (dx2 >= best_dist[index]) return;*/
 	//	nearest_kernel(dx > 0 ? kdtreeroot->right : kdtreeroot->left, nd, i, dim, best, best_dist);
 }
