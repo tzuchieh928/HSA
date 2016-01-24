@@ -61,15 +61,15 @@ int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
 		sizeof(int), &descriptors2.cols);
 	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
 
-	/*status = clSetKernelArgSVMPointer(sample_kernel,
+	status = clSetKernelArgSVMPointer(sample_kernel,
 		4,
 		(void *)(svmFound));
-	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmFound) failed.");*/
+	CHECK_OPENCL_ERROR(status, "clSetKernelArgSVMPointer(svmFound) failed.");
 
-	status = clSetKernelArg(sample_kernel,
+/*	status = clSetKernelArg(sample_kernel,
 		4,
 		sizeof(cl_mem), &clmFound);
-	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");
+	CHECK_OPENCL_ERROR(status, "clSetKernelArg failed.");*/
 
 	status = clSetKernelArgSVMPointer(sample_kernel,
 		5,
@@ -96,18 +96,28 @@ int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
 
 	status = clEnqueueSVMMap(commandQueue,
 		CL_TRUE, //blocking call
-		CL_MAP_WRITE_INVALIDATE_REGION,
+		CL_MAP_READ,
 		svmFound,
 		keypoints2.size() * sizeof(int),
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmFound) failed.");
+
+	status = clEnqueueSVMMap(commandQueue,
+		CL_TRUE, //blocking call
+		CL_MAP_READ,
+		svmBestDist,
+		keypoints2.size() * sizeof(double),
 		0,
 		NULL,
 		NULL);
 	CHECK_OPENCL_ERROR(status, "clEnqueueSVMMap(svmSearchBuf) failed.");
 
 	int *found = (int *)svmFound;
-	
+	double *bestDist = (double *)svmBestDist;
 	for (int i = 0; i < keypoints2.size(); i++) {
-		fprintf(fsvmkdmatch, "%d\n", found[i]);
+		fprintf(fsvmkdmatch, "%d\t%.5f\n", found[i], bestDist[i]);
 	}
 	status = clEnqueueSVMUnmap(commandQueue,
 		svmFound,
@@ -117,6 +127,12 @@ int OCL2KDTree::gpuFindNearest(vector<KeyPoint> keypoints2, Mat descriptors2){
 	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmTreeBuf) failed.");
 
 
+	status = clEnqueueSVMUnmap(commandQueue,
+		svmBestDist,
+		0,
+		NULL,
+		NULL);
+	CHECK_OPENCL_ERROR(status, "clEnqueueSVMUnmap(svmBestDist) failed.");
 
 
 
@@ -191,7 +207,7 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 
 
 
-	/*svmFound = clSVMAlloc(context,
+	svmFound = clSVMAlloc(context,
 		CL_MEM_READ_WRITE,
 		keypoints2.size() * sizeof(int),
 		0);
@@ -199,10 +215,10 @@ int OCL2KDTree::dataMarshalling(vector<KeyPoint> keypoints1, vector<KeyPoint> ke
 	if (NULL == svmFound)
 		retValue = SDK_FAILURE;
 
-	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");*/
+	CHECK_ERROR(retValue, SDK_SUCCESS, "clSVMAlloc(svmFound) failed.");
 
-	svmFound = malloc(sizeof(int)* keypoints2.size());
-	clmFound = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int)* keypoints2.size(), svmFound, NULL);
+	//svmFound = malloc(sizeof(int)* keypoints2.size());
+	//clmFound = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int)* keypoints2.size(), svmFound, NULL);
 
 
 	svmBestDist = clSVMAlloc(context,

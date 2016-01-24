@@ -42,7 +42,7 @@ private:
 	/* svm found */
 	void*                 svmFound;
 
-	cl_mem clmFound;
+	//cl_mem clmFound;
 	/* best Dist */
 	void*                 svmBestDist;
 	struct hsaNode		  *root;

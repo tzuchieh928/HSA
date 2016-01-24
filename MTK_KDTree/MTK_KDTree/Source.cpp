@@ -5,7 +5,7 @@
 
 int main(int argc, const char* argv[])
 {
-	const Mat img1 = imread("6.jpg", 0); //Load as grayscale
+	const Mat img1 = imread("5.jpg", 0); //Load as grayscale
 	const Mat img2 = imread("6.jpg", 0);
 
 	FILE *fkp1, *fkp2, *fbfmatch,*fkdmatch;

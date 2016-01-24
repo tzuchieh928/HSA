@@ -30,8 +30,8 @@ __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int 
 		node *kdtreeroot = (node *)root;
 		node *testNode = (node *)nd;
 		int index = get_global_id(0);
-		
-/*
+		//best[index] = index;
+
 		if (!kdtreeroot) return;
 		d = dist(kdtreeroot, &testNode[index], dim);
 		dx = kdtreeroot->des[i] - testNode[index].des[i];
@@ -50,6 +50,6 @@ __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int 
 		if (++i >= dim) i = 0;
 
 		nearest_kernel(dx > 0 ? kdtreeroot->left : kdtreeroot->right, nd, i, dim, best, best_dist);
-		if (dx2 >= best_dist[index]) return;*/
+		if (dx2 >= best_dist[index]) return;
 	//	nearest_kernel(dx > 0 ? kdtreeroot->right : kdtreeroot->left, nd, i, dim, best, best_dist);
 }
