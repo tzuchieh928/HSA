@@ -159,7 +159,8 @@ int main(int argc, const char* argv[])
 	for (int i = 0; i < keypoints2.size(); i++) {
 		found = 0;
 		visited = 0;
-		kt.nearest(root, &testNode[i], 0, descriptors2.cols, &found, &best_dist);
+		//kt.nearest(root, &testNode[i], 0, descriptors2.cols, &found, &best_dist);
+		kt.iterativeNearest(root, &testNode[i], 0, descriptors2.cols, &found, &best_dist);
 		fprintf(fkdmatch, "%d\t%d\t%.5f\n", found->index, testNode[i].index, best_dist);
 		//fprintf(fkdmatch, "%d\t%d\t%.5f\t\t%.2f\t%.2f\t%.2f\t%.2f\n", found->index, testNode[i].index, best_dist, featureTree[found->index].x, featureTree[found->index].y, testNode[i].x, testNode[i].y);
 	/*	for (int j = 0; j < descriptors1.cols; j++)
@@ -212,21 +213,6 @@ int main(int argc, const char* argv[])
 
 	ocl2kdtree.gpuFindNearest(keypoints2, descriptors2);
 	//ocl2kdtree.gpuFindNearest(keypoints2, descriptors2);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

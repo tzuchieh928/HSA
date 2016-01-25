@@ -118,57 +118,72 @@ public:
 		nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist);
 	}
 
+
+
+
+
+	//2016/1/25 Li
+	
 	void iterativeNearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
 	struct kd_node_t **best, double *best_dist) {
-
-		struct kd_node_t *oriRoot = root;
-		float d, dx, dx2;
-
-		if (!root) return;
 		
-		while (true){
-			if (!root) return;
+		const int MAXDEPTH = 128;
+		struct kd_node_t *nodeStack[MAXDEPTH];
+		int iStack[MAXDEPTH];
+		float dx2OfParentStack[MAXDEPTH];
+		int top = 0;
 
-			d = dist(root, nd, dim);
-			dx = root->des[i] - nd->des[i];
-			dx2 = dx * dx;
+		iStack[top] = 0;
+		dx2OfParentStack[top] = 0;
+		nodeStack[top++] = root;//push
+		
+		while (top>0)
+		{
+			visited++;
+			--top;
+			struct kd_node_t *n = nodeStack[top];//pop
+			int iTop = iStack[top];
+			float dx2ofParent = dx2OfParentStack[top];
+			//check it
+			if (n!=root && dx2ofParent >= *best_dist)
+				continue;
+
+			if (!n) continue;
+
+			float d, dx, dx2;
+
+			
+
+			d = dist(n, nd, dim);
+			dx = n->des[iTop] - nd->des[iTop];
+			dx2 = dx*dx;
+
 			if (!*best || d < *best_dist)
 			{
 				*best_dist = d;
-				*best = root;
+				*best = n;
 			}
-			/* if chance of exact match is high */
-			if (!*best_dist)
-				return;
 
-			if (++i >= dim) i = 0;
-
-			dx > 0 ? root = root->left : root = root->right;
-		}
-		root = oriRoot;
-		d = dist(root, nd, dim);
-		dx = root->des[i] - nd->des[i];
-		dx2 = dx * dx;
-		if (dx2 >= *best_dist) return;
-		i = 1;
-		while (true){
-			if (!root) return;
-
-			d = dist(root, nd, dim);
-			dx = root->des[i] - nd->des[i];
-			dx2 = dx * dx;
-			if (!*best || d < *best_dist)
+			if ((*best_dist) == 0)
 			{
-				*best_dist = d;
-				*best = root;
+				//store solution
+				break;
 			}
-			/* if chance of exact match is high */
-			if (!*best_dist)
-				return;
 
-			if (++i >= dim) i = 0;
+			if (++iTop >= dim) iTop = 0;
 
-			dx > 0 ? root = root->right : root = root->left;
+			//if pass check
+			//push childs
+			iStack[top] = iTop;
+			dx2OfParentStack[top] = dx2;
+			nodeStack[top] = n->left;
+			top++;
+			
+
+			iStack[top] = iTop;
+			dx2OfParentStack[top] = dx2;
+			nodeStack[top] = n->right;
+			top++;
 		}
 
 	}

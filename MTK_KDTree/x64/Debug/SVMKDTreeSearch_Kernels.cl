@@ -1,9 +1,10 @@
 /* binary tree node definition */
 #define MAX_DIM 128
+#define MAXDEPTH 128
 typedef struct nodeStruct
 {
 	float des[MAX_DIM];
-	int index;
+	int index; 
 	float x;
 	float y;
   __global struct nodeStruct* left;
@@ -21,28 +22,6 @@ double dist(node *a, node *b, int dim)
 }
 
 
-void nearest(node *root, node*nd, int i, int dim, int *best, double *best_dist, int index)
-{
-	float d, dx, dx2;
-
-	if (!root) return;
-	d = dist(root, nd, dim);
-	dx = root->des[i] - nd->des[i];
-	dx2 = dx * dx;
-	
-	if (best[index] == -1 || d < best_dist[index]) {
-		best_dist[index] = d;
-		best[index] = root->index;
-	}
-
-	/* if chance of exact match is high */
-	if (!best_dist[index]) return;
-	if (++i >= dim) i = 0;
-	nearest(dx > 0 ? root->left : root->right, nd, i, dim, best, best_dist, index);
-	if (dx2 >= best_dist[index]) return;
-	nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist, index);
-}
-
 
 /***  
  * sample_kernel:
@@ -50,30 +29,61 @@ void nearest(node *root, node*nd, int i, int dim, int *best, double *best_dist, 
 __kernel void nearest_kernel(__global void *root, __global void *nd, int i, int dim,
 	__global int *best, __global double *best_dist)
 {
-		float d, dx, dx2;
-		node *kdtreeroot = (node *)root;
-		node *testNode = (node *)nd;
 		int index = get_global_id(0);
-		//best[index] = index;
+		node *testNode = (node *)nd;
+		node *nodeStack[MAXDEPTH];
+		int iStack[MAXDEPTH];
+		float dx2OfParentStack[MAXDEPTH];
+		int top = 0;
 
-		if (!kdtreeroot) return;
-		d = dist(kdtreeroot, &testNode[index], dim);
-		dx = kdtreeroot->des[i] - testNode[index].des[i];
-		dx2 = dx * dx;
+		iStack[top] = 0;
+		dx2OfParentStack[top] = 0;
+		nodeStack[top++] = (node *)root;//push
+		while (top>0)
+		{
+			
+			--top;
+			node *n = nodeStack[top];//pop
+			int iTop = iStack[top];
+			float dx2ofParent = dx2OfParentStack[top];
+			//check it
+			if ( best_dist[index]!=-1 && dx2ofParent >= best_dist[index])
+				continue;
 
-		//visited++;
+			if (!n) continue;
 
-		if (best[index] == -1 || d < best_dist[index]) {
-			best_dist[index] = d;
-			best[index] = kdtreeroot->index;
+			float d, dx, dx2;
+
+			d = dist(n, &testNode[index], dim);
+			dx = n->des[iTop] - testNode[index].des[iTop];
+			dx2 = dx*dx;
+
+			if (best[index] == -1 || d < best_dist[index])
+			{
+				best_dist[index] = d;
+				best[index] = n->index;
+			}
+
+			if ((best_dist[index]) == 0)
+			{
+				//store solution
+				best[index] = n->index;
+				break;
+			}
+
+			if (++iTop >= dim) iTop = 0;
+
+			//if pass check
+			//push childs
+			iStack[top] = iTop;
+			dx2OfParentStack[top] = dx2;
+			nodeStack[top] = n->left;
+			top++;
+			
+
+			iStack[top] = iTop;
+			dx2OfParentStack[top] = dx2;
+			nodeStack[top] = n->right;
+			top++;
 		}
-
-		// if chance of exact match is high 
-		if (!best_dist[index]) return;
-		     
-		if (++i >= dim) i = 0;
-
-	//	nearest(dx > 0 ? kdtreeroot->left : kdtreeroot->right, nd, i, dim, best, best_dist, index);
-	//	if (dx2 >= best_dist[index]) return;*/
-	//	nearest_kernel(dx > 0 ? kdtreeroot->right : kdtreeroot->left, nd, i, dim, best, best_dist);
 }
